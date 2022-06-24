@@ -1,0 +1,41 @@
+# https://github.com/KSPActions/reverse-rdssh-actions
+# debugging only - @keepsobp
+name: ubuntu-rdp
+
+on: 
+  workflow_dispatch:
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  ubuntu-rdp:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    env:
+      NGROK_TOKEN : ${{ secrets.NGROK_TOKEN }}
+    steps:
+    - name: Run establish a ngrok tunnel
+      uses: vmactions/ngrok-tunnel@579a9626b87931d41492fbadcbec7453040ee080
+      with:
+        protocol: tcp
+        port: 3389
+    - name: Change runner password
+      run: |
+         sudo apt-get update 
+         echo 'runner:${{ secrets.PASSWORD }}' | sudo chpasswd
+         echo 'runneradmin:${{ secrets.PASSWORD }}' | sudo chpasswd
+
+    - name: Install desktop environment 
+      run: |
+        sudo apt-get install xfce4 xfce4-terminal -y 
+
+    - name: Install xrdp
+      run: |
+        sudo apt-get install xrdp
+        sudo adduser xrdp ssl-cert
+        echo xfce4-session > ~/.xsession
+        sudo service xrdp restart     
+
+    - name: sleep
+      run: sleep 21600

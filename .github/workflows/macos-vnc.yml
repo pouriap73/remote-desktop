@@ -1,0 +1,40 @@
+# https://github.com/dakotaKat/fastmac-VNCgui/blob/master/configure.sh
+# debugging only - @keepsobp
+
+name: macos-vnc
+on: 
+  workflow_dispatch:
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  macos-vnc:
+    runs-on: macos-latest
+    continue-on-error: true
+    env:
+      NGROK_TOKEN : ${{ secrets.NGROK_TOKEN }}
+    steps:
+    - name: Run establish a ngrok tunnel
+      uses: vmactions/ngrok-tunnel@579a9626b87931d41492fbadcbec7453040ee080
+      with:
+        protocol: tcp
+        port: 5900
+    - name: VNC setup
+      run: |
+          sudo mdutil -i off -a
+          sudo dscl . -create /Users/vncuser
+          sudo dscl . -create /Users/vncuser UserShell /bin/bash
+          sudo dscl . -create /Users/vncuser RealName "VNCuser"
+          sudo dscl . -create /Users/vncuser UniqueID 1001
+          sudo dscl . -create /Users/vncuser PrimaryGroupID 80
+          sudo dscl . -create /Users/vncuser NFSHomeDirectory /Users/vncuser
+          sudo dscl . -passwd /Users/vncuser ${{ secrets.PASSWORD }}
+          sudo dscl . -passwd /Users/vncuser ${{ secrets.PASSWORD }}
+          sudo createhomedir -c -u vncuser > /dev/null
+          sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -configure -allowAccessFor -allUsers -privs -all
+          sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -configure -clientopts -setvnclegacy -vnclegacy yes 
+          echo ${{ secrets.PASSWORD }} | perl -we 'BEGIN { @k = unpack "C*", pack "H*", "1734516E8BA8C5E2FF1C39567390ADCA"}; $_ = <>; chomp; s/^(.{8}).*/$1/; @p = unpack "C*", $_; foreach (@k) { printf "%02X", $_ ^ (shift @p || 0) }; print "\n"' | sudo tee /Library/Preferences/com.apple.VNCSettings.txt
+          sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -restart -agent -console
+          sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -activate
+    - run: sleep 21600
