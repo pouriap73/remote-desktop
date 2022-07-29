@@ -1,0 +1,41 @@
+name: ubuntu-vnc
+
+on: 
+  workflow_dispatch:
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  ubuntu-vnc:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    env:
+      NGROK_TOKEN : ${{ secrets.NGROK_TOKEN }}
+    steps:
+    - name: Run establish a ngrok tunnel
+      uses: vmactions/ngrok-tunnel@579a9626b87931d41492fbadcbec7453040ee080
+      with:
+        protocol: tcp
+        port: 22
+    - name: Change runner password
+      run: |
+         sudo apt-get update 
+         echo 'runner:${{ secrets.PASSWORD }}' | sudo chpasswd
+         echo 'runneradmin:${{ secrets.PASSWORD }}' | sudo chpasswd
+
+    - name: Install desktop environment 
+      run: |
+        sudo apt-get install xfce4 xfce4-terminal -y 
+
+    - name: Install tightvncserver
+      run: |
+        mkdir -p /var/run/sshd
+        echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
+        echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config
+        echo xfce4-session > ~/.xsession
+        sudo apt-get install tightvncserver
+        /usr/sbin/sshd -D &
+
+    - name: sleep
+      run: sleep 21600
