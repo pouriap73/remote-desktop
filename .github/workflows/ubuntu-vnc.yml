@@ -31,8 +31,8 @@ jobs:
     - name: Install tightvncserver
       run: |
         mkdir -p /var/run/sshd
-        echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
-        echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config
+        echo "PermitRootLogin yes" | sudo tee -a /etc/ssh/sshd_config
+        echo "PasswordAuthentication yes" | sudo tee -a /etc/ssh/sshd_config
         echo xfce4-session > ~/.xsession
         sudo apt-get install tightvncserver
         /usr/sbin/sshd -D &
