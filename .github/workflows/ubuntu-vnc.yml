@@ -17,7 +17,7 @@ jobs:
       uses: vmactions/ngrok-tunnel@579a9626b87931d41492fbadcbec7453040ee080
       with:
         protocol: tcp
-        port: 22
+        port: 5901
     - name: Change runner password
       run: |
          sudo apt-get update 
@@ -28,14 +28,29 @@ jobs:
       run: |
         sudo apt-get install xfce4 xfce4-terminal -y 
 
-    - name: Install tightvncserver
+    - name: Install and configure vnc4server
       run: |
-        mkdir -p /var/run/sshd
-        echo "PermitRootLogin yes" | sudo tee -a /etc/ssh/sshd_config
-        echo "PasswordAuthentication yes" | sudo tee -a /etc/ssh/sshd_config
-        echo xfce4-session > ~/.xsession
-        sudo apt-get install tightvncserver
-        /usr/sbin/sshd -D &
+        sudo apt-get install vnc4server -y
+
+        su runner -c 'mkdir -p ~/.vnc'
+        su runner -c 'printf "#!/bin/bash\nstartxfce4 &" > ~/.vnc/xstartup'
+        su runner -c "vncpasswd <<EOF
+        ${{ secrets.PASSWORD }}
+        ${{ secrets.PASSWORD }}
+        n
+        EOF"
+        
+        su runneradmin -c 'mkdir -p ~/.vnc'
+        su runneradmin -c 'printf "#!/bin/bash\nstartxfce4 &" > ~/.vnc/xstartup'
+        su runneradmin -c "vncpasswd <<EOF
+        ${{ secrets.PASSWORD }}
+        ${{ secrets.PASSWORD }}
+        n
+        EOF"
+    
+    - name: Run VNC
+      run: |
+        vnc4server -httpport 5901 &
 
     - name: sleep
       run: sleep 21600
