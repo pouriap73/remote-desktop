@@ -17,7 +17,7 @@ jobs:
       uses: vmactions/ngrok-tunnel@579a9626b87931d41492fbadcbec7453040ee080
       with:
         protocol: tcp
-        port: 5901
+        port: 5900
     - name: Change runner password
       run: |
          sudo apt-get update 
@@ -30,27 +30,19 @@ jobs:
 
     - name: Install and configure vnc4server
       run: |
-        sudo apt-get install vnc4server -y
+        sudo apt-get install tightvncserver -y
 
-        su runner -c 'mkdir -p ~/.vnc'
-        su runner -c 'printf "#!/bin/bash\nstartxfce4 &" > ~/.vnc/xstartup'
-        su runner -c "vncpasswd <<EOF
-        ${{ secrets.PASSWORD }}
-        ${{ secrets.PASSWORD }}
-        n
-        EOF"
+        mkdir -p ~/.vnc
+        printf "#!/bin/bash\nstartxfce4 &" > ~/.vnc/xstartup
+        echo "${{ secrets.PASSWORD }}" | vncpasswd -f > ~/.vnc/passwd
         
         su runneradmin -c 'mkdir -p ~/.vnc'
         su runneradmin -c 'printf "#!/bin/bash\nstartxfce4 &" > ~/.vnc/xstartup'
-        su runneradmin -c "vncpasswd <<EOF
-        ${{ secrets.PASSWORD }}
-        ${{ secrets.PASSWORD }}
-        n
-        EOF"
+        su runneradmin -c 'echo "${{ secrets.PASSWORD }}" | vncpasswd -f > ~/.vnc/passwd'
     
     - name: Run VNC
       run: |
-        vnc4server -httpport 5901 &
+        vncserver -kill :1 | vncserver -geometry 1280x800
 
     - name: sleep
       run: sleep 21600
