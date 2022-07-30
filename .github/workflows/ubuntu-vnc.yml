@@ -34,12 +34,7 @@ jobs:
 
         mkdir -p ~/.vnc
         printf "#!/bin/bash\nstartxfce4 &" > ~/.vnc/xstartup
-        echo "${{ secrets.PASSWORD }}" | vncpasswd -f > ~/.vnc/passwd
-        
-        su runneradmin -c 'mkdir -p ~/.vnc'
-        su runneradmin -c 'printf "#!/bin/bash\nstartxfce4 &" > ~/.vnc/xstartup'
-        su runneradmin -c 'echo "${{ secrets.PASSWORD }}" | vncpasswd -f > ~/.vnc/passwd'
-    
+        echo "${{ secrets.PASSWORD }}" | vncpasswd -f > ~/.vnc/passwd    
     - name: Run VNC
       run: |
         vncserver -kill :1 | vncserver -geometry 1280x800
